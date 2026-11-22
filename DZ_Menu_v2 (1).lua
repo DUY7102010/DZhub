@@ -858,9 +858,9 @@ local DASH_DISTANCE    = 6
 local AURA_RANGE       = 50
 local SWORD_RADIUS     = 2.4
 local SWORD_HEIGHT     = 0
-local SWORD_SPIN_SPEED = 120
+local SWORD_SPIN_SPEED = 500
 local SKY_HEIGHT       = 40
-local FLY_SPEED_AURA   = 85
+local FLY_SPEED_AURA   = 700
 
 local auraArmed, auraEngineRunning = false, false
 local spinAngle = 0
@@ -1187,7 +1187,7 @@ onRespawn[#onRespawn + 1] = function()
 	end
 end
 
-DZ.AddToggle("Aura kiếm + Godmode", {Floating = true}, function(on)
+DZ.AddToggle("Aura", {Floating = true}, function(on)
 	auraArmed = on
 	if on then
 		startAuraWatcher()
@@ -1197,7 +1197,7 @@ DZ.AddToggle("Aura kiếm + Godmode", {Floating = true}, function(on)
 	end
 end)
 
-DZ.AddToggle("Lướt tới trước (TP Wall)", {Floating = true, Momentary = true}, function(on)
+DZ.AddToggle("TP Wall", {Floating = true, Momentary = true}, function(on)
 	if not on then return end
 	local myRoot = root or getHRP(char)
 	if not myRoot or not hum or hum.Health <= 0 then return end
@@ -1213,7 +1213,7 @@ DZ.AddToggle("Lướt tới trước (TP Wall)", {Floating = true, Momentary = t
 	end)
 end)
 
-DZ.AddToggle("Bay trên đầu mục tiêu (Sky Fly)", {Floating = true}, function(on)
+DZ.AddToggle("Sky Fly", {Floating = true}, function(on)
 	if on then
 		startSkyFly()
 	else
