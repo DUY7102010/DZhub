@@ -858,9 +858,9 @@ local DASH_DISTANCE    = 6
 local AURA_RANGE       = 50
 local SWORD_RADIUS     = 2.4
 local SWORD_HEIGHT     = 0
-local SWORD_SPIN_SPEED = 500
+local SWORD_SPIN_SPEED = 5000
 local SKY_HEIGHT       = 40
-local FLY_SPEED_AURA   = 700
+local FLY_SPEED_AURA   = 7000
 
 local auraArmed, auraEngineRunning = false, false
 local spinAngle = 0
