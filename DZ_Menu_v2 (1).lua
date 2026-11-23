@@ -1193,7 +1193,7 @@ onRespawn[#onRespawn + 1] = function()
 	end
 end
 
-DZ.AddToggle("Aura kiếm + Godmode", {Floating = true}, function(on)
+DZ.AddToggle("Aura", {Floating = true}, function(on)
 	auraArmed = on
 	if on then
 		startAuraWatcher()
@@ -1203,7 +1203,7 @@ DZ.AddToggle("Aura kiếm + Godmode", {Floating = true}, function(on)
 	end
 end)
 
-DZ.AddToggle("Lướt tới trước (TP Wall)", {Floating = true, Momentary = true}, function(on)
+DZ.AddToggle("TP Wall", {Floating = true, Momentary = true}, function(on)
 	if not on then return end
 	local myRoot = root or getHRP(char)
 	if not myRoot or not hum or hum.Health <= 0 then return end
@@ -1239,7 +1239,7 @@ local function isProtected(tChar)
 	return false
 end
 
-DZ.AddToggle("Auto TP All (bỏ qua ForceField)", {Floating = true}, function(on)
+DZ.AddToggle("Auto kill", {Floating = true}, function(on)
 	tpAllToken += 1
 	local tk = tpAllToken -- token: bật/tắt nhanh không sinh 2 vòng lặp
 	if not on then return end
