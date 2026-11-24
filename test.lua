@@ -275,15 +275,29 @@ local function scanTycoon(tycoon)
   n+=1; if n%4000==0 then task.wait() end
   if d:IsA("BasePart") then
    local ln=string.lower(d.Name)
+   
    if ln=="collect" then
     local pn=d.Parent and string.lower(d.Parent.Name) or ""
     if pn=="collector" then collect=collect or d else collectLoose=collectLoose or d end
+   
+   -- CHỈ NHẬN DIỆN NÚT BẤM THẬT SỰ
    elseif string.find(ln,"button",1,true) then
-    if underCollector(d,tycoon) then collectLoose=collectLoose or d
-    else parts[#parts+1]=d; perParent[d.Parent]=(perParent[d.Parent] or 0)+1 end
+    if not underCollector(d,tycoon) then
+     -- Lọc nhiễu: Bỏ qua nếu tên hoặc thư mục cha chứa các từ khóa gây nhiễu
+     local parentName = d.Parent and string.lower(d.Parent.Name) or ""
+     local isNoise = string.find(ln,"door") or string.find(ln,"laser") or string.find(ln,"wall") 
+                     or string.find(parentName,"door") or string.find(parentName,"laser") or string.find(parentName,"wall")
+     
+     if not isNoise then
+      parts[#parts+1]=d; perParent[d.Parent]=(perParent[d.Parent] or 0)+1 
+     end
+    else
+     collectLoose=collectLoose or d
+    end
    end
   end
  end
+ 
  local relaxed=false
  if #parts==0 then
   relaxed=true
@@ -292,11 +306,16 @@ local function scanTycoon(tycoon)
     local p=d.Parent
     if p and p:IsA("BasePart") and string.lower(p.Name)~="collect"
      and not underCollector(p,tycoon) and not p:FindFirstAncestorOfClass("Humanoid") then
-     parts[#parts+1]=p; perParent[p.Parent]=(perParent[p.Parent] or 0)+1
+     -- Lọc nhiễu tương tự cho trường hợp dự phòng
+     local pn = string.lower(p.Name)
+     if not string.find(pn,"door") and not string.find(pn,"laser") then
+      parts[#parts+1]=p; perParent[p.Parent]=(perParent[p.Parent] or 0)+1
+     end
     end
    end
   end
  end
+ 
  local total=#PRIORITY_LIST
  local list={}
  for i,part in ipairs(parts) do
@@ -309,6 +328,25 @@ local function scanTycoon(tycoon)
    list[#list+1]={part=part,order=order,label=label,kind=kind,seq=i}
   end
  end
+ table.sort(list,function(a,b)
+  if a.order~=b.order then return a.order<b.order end
+  return a.seq<b.seq
+ end)
+ 
+ cache.list=list; cache.collect=collect or collectLoose
+ cache.dirty=false; cache.scannedAt=os.clock()
+ if #list~=cache.lastCount then
+  cache.lastCount=#list
+  if #list==0 then warn("[Farm] Không thấy nút mua nào trong "..tycoon:GetFullName())
+  elseif relaxed then warn("[Farm] Không có part tên 'Button', dùng chế độ dự phòng") end
+ end
+ if CONFIG.Debug then
+  print(("[Farm] Quét: %d nút, collect = %s"):format(#list,cache.collect and cache.collect:GetFullName() or "không có"))
+  for _,c in ipairs(list) do
+   print(("  #%d [%s] %s -> %s"):format(c.order,c.kind,c.label,c.part:GetFullName()))
+  end
+ end
+end
  table.sort(list,function(a,b)
   if a.order~=b.order then return a.order<b.order end
   return a.seq<b.seq
@@ -498,12 +536,128 @@ local function farmTick()
     else
      setStatus("Chờ tiền ("..target.label..") -> Collect...")
      collectOrIdle()
+local function farmTick()
+ local now=os.clock()
+ local root,hum=getChar()
+ if not root or hum.Health<=0 then stopCam(); setStatus("Chờ nhân vật..."); return 0.5 end
+ local tycoon=cache.tycoon
+ if not tycoon or not tycoon:IsDescendantOf(Workspace) then
+  cache.tycoon=nil
+  if now<cache.tycoonRetryAt then return 0.5 end
+  tycoon=findMyTycoon()
+  if not tycoon then
+   cache.tycoonFails+=1
+   cache.tycoonRetryAt=os.clock()+math.min(1+cache.tycoonFails,5)
+   stopCam(); setStatus("Chưa thấy nhà mang tên: "..LP.Name); return 0.6
+  end
+  cache.tycoon,cache.dirty,cache.tycoonFails=tycoon,true,0
+ end
+ 
+ if cache.dirty or (now-cache.scannedAt)>CONFIG.ScanInterval then
+  scanTycoon(tycoon); now=os.clock()
+ end
+ 
+ -- Kiểm tra nếu nút vừa đạp đã biến mất (mua thành công)
+ if lastStepPart and not isLive(lastStepPart) then
+  bought+=1; lastStepPart=nil; cache.dirty=true
+ end
+ 
+ -- Chọn mục tiêu
+ local target
+ for _,c in ipairs(cache.list) do
+  local p=c.part
+  if not p:IsDescendantOf(Workspace) then 
+   cache.dirty=true
+  elseif isLive(p) and not doorIgnoreList[p] then -- Bỏ qua nếu nằm trong danh sách đen
+   local exp=skippedUntil[p]
+   if not exp or now>=exp then target=c break end
+  end
+ end
+ 
+ local collectPart=cache.collect
+ if collectPart and not collectPart:IsDescendantOf(Workspace) then
+  collectPart,cache.collect,cache.dirty=nil,nil,true
+ end
+ 
+ local function collectOrIdle()
+  if collectPart then doCollect(collectPart) else stopCam() end
+ end
+ 
+ if not target then
+  waitState,stepStreak={},{}
+  setStatus("Không còn nút mở -> Collect..."); collectOrIdle()
+ else
+  local kind=target.kind or "buy"
+  local probe=probeState[target.part]
+
+  if kind=="door" then
+   waitState,stepStreak={},{}
+   if not probe then
+    -- Lần đầu gặp: Đạp thử 1 lần
+    setStatus("Thử đạp cửa: "..target.label)
+    lastStepPart=target.part
+    doStep(target.part)
+    probeState[target.part]={lastProbe=now, tries=1}
+   elseif now - probe.lastProbe > 3 then
+    -- Đợi 3s, nếu cửa vẫn còn thì đưa vào danh sách đen
+    if isLive(target.part) then
+     doorIgnoreList[target.part] = true
+     warn("[Farm] Bỏ qua vật cản: "..target.part:GetFullName())
+     cache.dirty = true
+    end
+   else
+    -- Trong 3s chờ đợi thì đi Collect
+    collectOrIdle()
+   end
+
+  elseif kind=="special" then
+   waitState,stepStreak={},{}
+   if not probe or now-probe.lastProbe>CONFIG.ProbeInterval*2 then
+    setStatus("Đạp đặc biệt: "..target.label)
+    lastStepPart=target.part; doStep(target.part)
+    probeState[target.part]={tries=(probe and probe.tries or 0)+1,lastProbe=now,isDoor=false}
+   else collectOrIdle() end
+
+  else
+   -- Nút thường (mua)
+   if isButtonGreen(target.part) then
+    waitState={}
+    if stepStreak.part~=target.part then stepStreak={part=target.part,since=now} end
+    if (now-stepStreak.since)>CONFIG.StepGiveUp then
+     skipPart(target,CONFIG.StepSkip,"đạp mãi không mua được")
+     stepStreak={}
+    else
+     setStatus("Đủ tiền -> Đạp: "..target.label)
+     lastStepPart=target.part; doStep(target.part)
+    end
+   elseif probe and probe.tries>=CONFIG.ProbeMaxTries and not probe.isDoor then
+    -- Nút không đổi màu -> đạp định kỳ
+    probe.isDoor=true
+    setStatus("Nút không đổi màu -> đạp định kỳ: "..target.label)
+    if now-probe.lastProbe>CONFIG.ProbeInterval then
+     lastStepPart=target.part; doStep(target.part); probe.lastProbe=now
+    else collectOrIdle() end
+   else
+    -- Chờ tiền (chưa xanh)
+    stepStreak={}
+    if waitState.part~=target.part then waitState={part=target.part,since=now} end
+    local canProbe=not probe or now-probe.lastProbe>CONFIG.ProbeInterval
+    if canProbe then
+     setStatus("Đạp thử: "..target.label)
+     lastStepPart=target.part; doStep(target.part)
+     probeState[target.part]={tries=(probe and probe.tries or 0)+1,lastProbe=now,isDoor=false}
+    elseif (now-waitState.since)>CONFIG.WaitLimit then
+     skipPart(target,CONFIG.GhostSkip,"chờ quá lâu không xanh")
+     waitState={}
+    else
+     setStatus("Chờ tiền ("..target.label..") -> Collect...")
+     collectOrIdle()
     end
    end
   end
  end
  return CONFIG.LoopDelay
-end
+    end
 
 local function stopFarm()
  run.on=false; run.token+=1; stopCam()
