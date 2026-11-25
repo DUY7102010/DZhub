@@ -1,10 +1,10 @@
--- UI Give Item - Elemental Powers Tycoon (DZ Final Ultimate Version)
+-- UI Give Item - Elemental Powers Tycoon (DZ Neon Tech UI)
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
 
--- Cấu trúc: Name (Tên gửi Remote), Display (Tên hiển thị Tiếng Việt)
+-- Cấu trúc giữ nguyên: Name (Tên gửi Remote), Display (Tên hiển thị Tiếng Việt)
 local ITEM_LIST = {
     ["Bone (Xương)"] = {
         {Name="Blaster", Display="Súng xương"},
@@ -193,7 +193,6 @@ local function equipItem(realItemName)
     if game.PlaceId == 10253248401 then
         local remote = RS:FindFirstChild("RemoteEvent")
         if remote then 
-            -- Spam 3 lần để chắc chắn server nhận lệnh
             for i = 1, 3 do
                 remote:FireServer("equip_mystery_spell", realItemName)
                 task.wait(0.1)
@@ -202,187 +201,217 @@ local function equipItem(realItemName)
     end
 end
 
--- ===== GIAO DIỆN (UI) =====
+-- ===== HÀM KÉO THẢ DÙNG CHUNG =====
+local function makeDraggable(frame, dragArea)
+    local dragging, dragInput, dragStart, startPos
+    dragArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    dragArea.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- ===== GIAO DIỆN NEON TECH =====
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DZ_GiveUI"
+ScreenGui.Name = "DZ_NeonGiveUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = LP:WaitForChild("PlayerGui")
 
+-- Nút Toggle Nhỏ (Luôn hiển thị)
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 36, 0, 36)
-ToggleBtn.Position = UDim2.new(0, 10, 0.2, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(35, 38, 50)
+ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
+ToggleBtn.Position = UDim2.new(0, 20, 0.3, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
 ToggleBtn.Text = "DZ"
-ToggleBtn.TextColor3 = Color3.fromRGB(150, 160, 190)
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 255)
 ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 12
+ToggleBtn.TextSize = 14
 ToggleBtn.BorderSizePixel = 0
-ToggleBtn.Visible = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
+ToggleStroke.Color = Color3.fromRGB(0, 255, 255)
+ToggleStroke.Thickness = 2
+makeDraggable(ToggleBtn, ToggleBtn)
 
+-- Bảng Chính
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 260, 0, 270)
-MainFrame.Position = UDim2.new(0.5, -130, 0.5, -135)
-MainFrame.BackgroundColor3 = Color3.fromRGB(22, 24, 32)
+MainFrame.Size = UDim2.new(0, 280, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -160)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Visible = true
+MainFrame.Visible = false -- Ban đầu ẩn, bấm nút DZ mới hiện
 MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 local MainStroke = Instance.new("UIStroke", MainFrame)
-MainStroke.Color = Color3.fromRGB(60, 65, 85)
+MainStroke.Color = Color3.fromRGB(0, 255, 255)
 MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.2
 
+-- Thanh Tiêu Đề
 local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 30)
-TitleBar.BackgroundColor3 = Color3.fromRGB(30, 33, 45)
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 TitleBar.BorderSizePixel = 0
 TitleBar.Parent = MainFrame
-Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 8)
+makeDraggable(MainFrame, TitleBar)
+
+local TitleGradient = Instance.new("UIGradient")
+TitleGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
+}
+TitleGradient.Parent = TitleBar
 
 local TitleText = Instance.new("TextLabel")
-TitleText.Size = UDim2.new(1, -70, 1, 0)
-TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.Size = UDim2.new(1, -40, 1, 0)
+TitleText.Position = UDim2.new(0, 12, 0, 0)
 TitleText.BackgroundTransparency = 1
-TitleText.Text = "DZ ULTIMATE MENU"
-TitleText.TextColor3 = Color3.fromRGB(200, 210, 255)
-TitleText.TextSize = 12
+TitleText.Text = "DZ | NEON GIVE"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.TextSize = 13
 TitleText.Font = Enum.Font.GothamBold
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.Parent = TitleBar
 
+-- Nút Ẩn
 local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 20, 0, 20)
-MinBtn.Position = UDim2.new(1, -50, 0, 5)
-MinBtn.BackgroundColor3 = Color3.fromRGB(45, 50, 65)
+MinBtn.Size = UDim2.new(0, 24, 0, 24)
+MinBtn.Position = UDim2.new(1, -30, 0, 5)
+MinBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 255)
 MinBtn.Text = "-"
-MinBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinBtn.Font = Enum.Font.GothamBold
-MinBtn.TextSize = 14
+MinBtn.TextSize = 16
 MinBtn.BorderSizePixel = 0
 MinBtn.Parent = TitleBar
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 4)
 
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 20, 0, 20)
-CloseBtn.Position = UDim2.new(1, -25, 0, 5)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 10
-CloseBtn.BorderSizePixel = 0
-CloseBtn.Parent = TitleBar
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
-
 MinBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
-    ToggleBtn.Visible = true
 end)
 ToggleBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    ToggleBtn.Visible = false
-end)
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
-local dragging, dragInput, dragStart, startPos
-TitleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true; dragStart = input.Position; startPos = MainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-TitleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
-end)
-UIS.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
+    MainFrame.Visible = not MainFrame.Visible
 end)
 
+-- Tab Bar (Cột Trái)
 local TabBar = Instance.new("ScrollingFrame")
-TabBar.Size = UDim2.new(0, 75, 1, -36)
-TabBar.Position = UDim2.new(0, 6, 0, 34)
+TabBar.Size = UDim2.new(0, 85, 1, -45)
+TabBar.Position = UDim2.new(0, 8, 0, 40)
 TabBar.BackgroundTransparency = 1
 TabBar.ScrollBarThickness = 1
-TabBar.ScrollBarImageColor3 = Color3.fromRGB(80, 90, 120)
+TabBar.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 255)
 TabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
 TabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabBar.Parent = MainFrame
 local TabLayout = Instance.new("UIListLayout", TabBar)
 TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabLayout.Padding = UDim.new(0, 3)
+TabLayout.Padding = UDim.new(0, 4)
 
+-- Item Area (Cột Phải)
 local ItemArea = Instance.new("ScrollingFrame")
-ItemArea.Size = UDim2.new(1, -87, 1, -36)
-ItemArea.Position = UDim2.new(0, 83, 0, 34)
-ItemArea.BackgroundColor3 = Color3.fromRGB(26, 28, 38)
+ItemArea.Size = UDim2.new(1, -103, 1, -45)
+ItemArea.Position = UDim2.new(0, 95, 0, 40)
+ItemArea.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 ItemArea.BorderSizePixel = 0
 ItemArea.ScrollBarThickness = 2
-ItemArea.ScrollBarImageColor3 = Color3.fromRGB(80, 90, 120)
+ItemArea.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 255)
 ItemArea.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ItemArea.CanvasSize = UDim2.new(0, 0, 0, 0)
 ItemArea.Parent = MainFrame
 Instance.new("UICorner", ItemArea).CornerRadius = UDim.new(0, 6)
 local ItemLayout = Instance.new("UIListLayout", ItemArea)
 ItemLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ItemLayout.Padding = UDim.new(0, 2)
+ItemLayout.Padding = UDim.new(0, 3)
 ItemLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local function createTab(tabName, items)
     local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(1, -2, 0, 24)
-    TabBtn.BackgroundColor3 = Color3.fromRGB(35, 38, 50)
+    TabBtn.Size = UDim2.new(1, -4, 0, 26)
+    TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     TabBtn.Text = tabName
-    TabBtn.TextColor3 = Color3.fromRGB(160, 170, 190)
+    TabBtn.TextColor3 = Color3.fromRGB(150, 150, 170)
     TabBtn.Font = Enum.Font.GothamMedium
     TabBtn.TextSize = 10
     TabBtn.BorderSizePixel = 0
     TabBtn.Parent = TabBar
     Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 4)
+    local Stroke = Instance.new("UIStroke", TabBtn)
+    Stroke.Color = Color3.fromRGB(50, 50, 70)
+    Stroke.Thickness = 1
     
     TabBtn.MouseButton1Click:Connect(function()
         for _, v in pairs(TabBar:GetChildren()) do
             if v:IsA("TextButton") then
-                v.BackgroundColor3 = Color3.fromRGB(35, 38, 50)
-                v.TextColor3 = Color3.fromRGB(160, 170, 190)
+                v.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+                v.TextColor3 = Color3.fromRGB(150, 150, 170)
+                if v:FindFirstChildOfClass("UIStroke") then
+                    v:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(50, 50, 70)
+                end
             end
         end
-        TabBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 120)
-        TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        TabBtn.TextColor3 = Color3.fromRGB(0, 255, 255)
+        Stroke.Color = Color3.fromRGB(0, 255, 255)
+        Stroke.Thickness = 1.5
         
         for _, v in pairs(ItemArea:GetChildren()) do
             if v:IsA("TextButton") or v:IsA("TextLabel") then v:Destroy() end
         end
-        
         ItemArea.CanvasPosition = Vector2.new(0, 0)
         
         for i, itemData in ipairs(items) do
             local ItemBtn = Instance.new("TextButton")
-            ItemBtn.Size = UDim2.new(1, -6, 0, 24)
-            ItemBtn.BackgroundColor3 = Color3.fromRGB(40, 44, 58)
-            ItemBtn.Text = itemData.Display -- Hiển thị tiếng Việt
-            ItemBtn.TextColor3 = Color3.fromRGB(210, 220, 240)
+            ItemBtn.Size = UDim2.new(1, -8, 0, 26)
+            ItemBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+            ItemBtn.Text = itemData.Display
+            ItemBtn.TextColor3 = Color3.fromRGB(220, 220, 240)
             ItemBtn.Font = Enum.Font.Gotham
             ItemBtn.TextSize = 10
             ItemBtn.BorderSizePixel = 0
             ItemBtn.Parent = ItemArea
             Instance.new("UICorner", ItemBtn).CornerRadius = UDim.new(0, 4)
+            local ItemStroke = Instance.new("UIStroke", ItemBtn)
+            ItemStroke.Color = Color3.fromRGB(60, 60, 80)
+            ItemStroke.Thickness = 1
             
-            ItemBtn.MouseEnter:Connect(function() ItemBtn.BackgroundColor3 = Color3.fromRGB(55, 60, 85) end)
-            ItemBtn.MouseLeave:Connect(function() ItemBtn.BackgroundColor3 = Color3.fromRGB(40, 44, 58) end)
+            ItemBtn.MouseEnter:Connect(function() 
+                ItemBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55) 
+                ItemStroke.Color = Color3.fromRGB(255, 0, 255)
+            end)
+            ItemBtn.MouseLeave:Connect(function() 
+                ItemBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40) 
+                ItemStroke.Color = Color3.fromRGB(60, 60, 80)
+            end)
             
             ItemBtn.MouseButton1Click:Connect(function()
-                equipItem(itemData.Name) -- Gửi tên tiếng Anh lên Remote
-                ItemBtn.BackgroundColor3 = Color3.fromRGB(80, 100, 160)
+                equipItem(itemData.Name)
+                ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+                ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+                ItemStroke.Color = Color3.fromRGB(0, 255, 255)
                 task.wait(0.15)
-                ItemBtn.BackgroundColor3 = Color3.fromRGB(55, 60, 85)
+                ItemBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+                ItemBtn.TextColor3 = Color3.fromRGB(220, 220, 240)
+                ItemStroke.Color = Color3.fromRGB(255, 0, 255)
             end)
         end
     end)
