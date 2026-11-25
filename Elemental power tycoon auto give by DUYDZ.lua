@@ -1,190 +1,127 @@
--- UI Give Item - Elemental Powers Tycoon (DZ Neon Tech UI)
+-- UI Give Item - Elemental Powers Tycoon (DZ Neon Tech UI - Fixed)
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
 local LP = Players.LocalPlayer
 
--- Cấu trúc giữ nguyên: Name (Tên gửi Remote), Display (Tên hiển thị Tiếng Việt)
+-- (Giữ nguyên phần ITEM_LIST như cũ)
 local ITEM_LIST = {
     ["Bone (Xương)"] = {
-        {Name="Blaster", Display="Súng xương"},
-        {Name="Bone Surge", Display="Dâng trào xương"},
-        {Name="Bones Barrage", Display="Mưa xương"},
-        {Name="Flying Bone", Display="Xương bay"},
-        {Name="Judgement Blast", Display="Vụ nổ phán xét"},
-        {Name="Twin Blasters", Display="Súng xương đôi"}
+        {Name="Blaster", Display="Súng xương"}, {Name="Bone Surge", Display="Dâng trào xương"},
+        {Name="Bones Barrage", Display="Mưa xương"}, {Name="Flying Bone", Display="Xương bay"},
+        {Name="Judgement Blast", Display="Vụ nổ phán xét"}, {Name="Twin Blasters", Display="Súng xương đôi"}
     },
     ["Crystal (Pha lê)"] = {
-        {Name="Crystal Cleaver", Display="Rìu pha lê"},
-        {Name="Crystal Eruption", Display="Pha lê phun trào"},
-        {Name="Crystal Mine", Display="Mìn pha lê"},
-        {Name="Crystal Surge", Display="Dâng trào pha lê"},
-        {Name="Energy Crash", Display="Năng lượng va chạm"},
-        {Name="Energy Crown", Display="Vương miện năng lượng"},
+        {Name="Crystal Cleaver", Display="Rìu pha lê"}, {Name="Crystal Eruption", Display="Pha lê phun trào"},
+        {Name="Crystal Mine", Display="Mìn pha lê"}, {Name="Crystal Surge", Display="Dâng trào pha lê"},
+        {Name="Energy Crash", Display="Năng lượng va chạm"}, {Name="Energy Crown", Display="Vương miện năng lượng"},
         {Name="Energy Crystal", Display="Pha lê năng lượng"}
     },
     ["Darkness (Bóng tối)"] = {
-        {Name="Abyss", Display="Vực thẳm"},
-        {Name="Dark Arc", Display="Cung bóng tối"},
-        {Name="Dark Duo", Display="Cặp đôi bóng tối"},
-        {Name="Dark Hold", Display="Trói bóng tối"},
-        {Name="Shadow Sword", Display="Kiếm bóng"},
-        {Name="Unseen Barrage", Display="Mưa đòn vô hình"},
+        {Name="Abyss", Display="Vực thẳm"}, {Name="Dark Arc", Display="Cung bóng tối"},
+        {Name="Dark Duo", Display="Cặp đôi bóng tối"}, {Name="Dark Hold", Display="Trói bóng tối"},
+        {Name="Shadow Sword", Display="Kiếm bóng"}, {Name="Unseen Barrage", Display="Mưa đòn vô hình"},
         {Name="Unseen Hands", Display="Bàn tay vô hình"}
     },
     ["Devil (Ác quỷ)"] = {
-        {Name="Dark Tsunami", Display="Sóng thần bóng tối"},
-        {Name="Demon Lock", Display="Khóa quỷ"},
-        {Name="Demon Orb", Display="Cầu quỷ"},
-        {Name="Evil Bullet", Display="Đạn tà ác"},
-        {Name="Evil Flash", Display="Chớp tà ác"},
-        {Name="Fangs Barrage", Display="Mưa nanh"}
+        {Name="Dark Tsunami", Display="Sóng thần bóng tối"}, {Name="Demon Lock", Display="Khóa quỷ"},
+        {Name="Demon Orb", Display="Cầu quỷ"}, {Name="Evil Bullet", Display="Đạn tà ác"},
+        {Name="Evil Flash", Display="Chớp tà ác"}, {Name="Fangs Barrage", Display="Mưa nanh"}
     },
     ["Fire (Lửa)"] = {
-        {Name="Combust", Display="Bốc cháy"},
-        {Name="Comet", Display="Sao chổi"},
-        {Name="Fire Ball", Display="Cầu lửa"},
-        {Name="Fire Bomb", Display="Bom lửa"},
-        {Name="Fire Fly", Display="Ruồi lửa"},
-        {Name="Fire Shower", Display="Mưa lửa"},
+        {Name="Combust", Display="Bốc cháy"}, {Name="Comet", Display="Sao chổi"},
+        {Name="Fire Ball", Display="Cầu lửa"}, {Name="Fire Bomb", Display="Bom lửa"},
+        {Name="Fire Fly", Display="Ruồi lửa"}, {Name="Fire Shower", Display="Mưa lửa"},
         {Name="Fire Sword", Display="Kiếm lửa"}
     },
     ["Space (Không gian)"] = {
-        {Name="Asteroid Belt", Display="Vành đai tiểu hành tinh"},
-        {Name="Blackhole Orb", Display="Cầu hố đen"},
-        {Name="Cosmic Remote", Display="Điều khiển vũ trụ"},
-        {Name="Meteor Jam", Display="Mưa thiên thạch"},
-        {Name="Moon Splitter", Display="Xẻ đôi mặt trăng"},
-        {Name="Space Gun", Display="Súng không gian"},
+        {Name="Asteroid Belt", Display="Vành đai tiểu hành tinh"}, {Name="Blackhole Orb", Display="Cầu hố đen"},
+        {Name="Cosmic Remote", Display="Điều khiển vũ trụ"}, {Name="Meteor Jam", Display="Mưa thiên thạch"},
+        {Name="Moon Splitter", Display="Xẻ đôi mặt trăng"}, {Name="Space Gun", Display="Súng không gian"},
         {Name="Space Saucer", Display="Đĩa bay"}
     },
     ["Super Sonic (Siêu thanh)"] = {
-        {Name="Rebound Blast", Display="Nổ dội"},
-        {Name="Rebound Teleport", Display="Dịch chuyển dội"},
-        {Name="Sonic Barrage", Display="Mưa âm thanh"},
-        {Name="Sonic Blaster", Display="Súng âm thanh"},
-        {Name="Sonic Boom", Display="Nổ âm thanh"},
-        {Name="Sonic Twister", Display="Lốc xoáy âm thanh"},
+        {Name="Rebound Blast", Display="Nổ dội"}, {Name="Rebound Teleport", Display="Dịch chuyển dội"},
+        {Name="Sonic Barrage", Display="Mưa âm thanh"}, {Name="Sonic Blaster", Display="Súng âm thanh"},
+        {Name="Sonic Boom", Display="Nổ âm thanh"}, {Name="Sonic Twister", Display="Lốc xoáy âm thanh"},
         {Name="Super Sonic Wave", Display="Sóng siêu âm"}
     },
     ["Technology (Công nghệ)"] = {
-        {Name="Hyper Slash", Display="Chém siêu tốc"},
-        {Name="Hyper Sword", Display="Kiếm siêu tốc"},
-        {Name="Orbital", Display="Quỹ đạo"},
-        {Name="Photon Blast", Display="Nổ photon"},
-        {Name="Tesla Turret", Display="Trụ súng Tesla"},
-        {Name="Tesseract", Display="Khối Tesseract"},
+        {Name="Hyper Slash", Display="Chém siêu tốc"}, {Name="Hyper Sword", Display="Kiếm siêu tốc"},
+        {Name="Orbital", Display="Quỹ đạo"}, {Name="Photon Blast", Display="Nổ photon"},
+        {Name="Tesla Turret", Display="Trụ súng Tesla"}, {Name="Tesseract", Display="Khối Tesseract"},
         {Name="Twin-Photon Blast", Display="Nổ song photon"}
     },
     ["Thunder (Sấm sét)"] = {
-        {Name="Bolt", Display="Tia sét"},
-        {Name="Discharge", Display="Phóng điện"},
-        {Name="Energy Beam", Display="Tia năng lượng"},
-        {Name="Flying Nimbus", Display="Mây bay"},
-        {Name="Lightning Strike", Display="Sét đánh"},
-        {Name="Storm", Display="Bão tố"},
+        {Name="Bolt", Display="Tia sét"}, {Name="Discharge", Display="Phóng điện"},
+        {Name="Energy Beam", Display="Tia năng lượng"}, {Name="Flying Nimbus", Display="Mây bay"},
+        {Name="Lightning Strike", Display="Sét đánh"}, {Name="Storm", Display="Bão tố"},
         {Name="Thunder Staff", Display="Trượng sấm sét"}
     },
     ["Time (Thời gian)"] = {
-        {Name="Grand Clock", Display="Đồng hồ lớn"},
-        {Name="Tempo Beam", Display="Tia tiết tấu"},
-        {Name="Temporal Gate", Display="Cổng thời gian"},
-        {Name="Time Trap", Display="Bẫy thời gian"},
-        {Name="Warp Barrage", Display="Mưa biến dạng"},
-        {Name="Warp Bomb", Display="Bom biến dạng"}
+        {Name="Grand Clock", Display="Đồng hồ lớn"}, {Name="Tempo Beam", Display="Tia tiết tấu"},
+        {Name="Temporal Gate", Display="Cổng thời gian"}, {Name="Time Trap", Display="Bẫy thời gian"},
+        {Name="Warp Barrage", Display="Mưa biến dạng"}, {Name="Warp Bomb", Display="Bom biến dạng"}
     },
     ["Turret (Trụ súng)"] = {
-        {Name="Energy Ball", Display="Cầu năng lượng"},
-        {Name="Guide Turret", Display="Trụ súng dẫn đường"},
+        {Name="Energy Ball", Display="Cầu năng lượng"}, {Name="Guide Turret", Display="Trụ súng dẫn đường"},
         {Name="Security Guns", Display="Súng an ninh"}
     },
     ["Venom (Nọc độc)"] = {
-        {Name="Acid Rain", Display="Mưa axit"},
-        {Name="Bubbling Venom", Display="Nọc độc sủi bọt"},
-        {Name="Hardened Venom", Display="Nọc độc cứng"},
-        {Name="Poison Bullet", Display="Đạn độc"},
-        {Name="Poison Demon", Display="Quỷ độc"},
-        {Name="Venom Stream", Display="Suối nọc độc"}
+        {Name="Acid Rain", Display="Mưa axit"}, {Name="Bubbling Venom", Display="Nọc độc sủi bọt"},
+        {Name="Hardened Venom", Display="Nọc độc cứng"}, {Name="Poison Bullet", Display="Đạn độc"},
+        {Name="Poison Demon", Display="Quỷ độc"}, {Name="Venom Stream", Display="Suối nọc độc"}
     },
     ["Water (Nước)"] = {
-        {Name="Aqua Trident", Display="Đinh ba nước"},
-        {Name="Big Tsunami", Display="Sóng thần lớn"},
-        {Name="Bubbles", Display="Bong bóng"},
-        {Name="Jellyfish", Display="Sứa"},
-        {Name="Water Beam", Display="Tia nước"},
-        {Name="Whirlpool", Display="Xoáy nước"}
+        {Name="Aqua Trident", Display="Đinh ba nước"}, {Name="Big Tsunami", Display="Sóng thần lớn"},
+        {Name="Bubbles", Display="Bong bóng"}, {Name="Jellyfish", Display="Sứa"},
+        {Name="Water Beam", Display="Tia nước"}, {Name="Whirlpool", Display="Xoáy nước"}
     },
     ["Rebirth (Tái sinh)"] = {
-        {Name="Bubble Flail", Display="Chùy bong bóng"},
-        {Name="Crystalline Mirror", Display="Gương pha lê"},
-        {Name="Dark Flames", Display="Lửa bóng tối"},
-        {Name="Draedon's Tech", Display="Công nghệ Draedon"},
-        {Name="Elysian Beam", Display="Tia Elysian"},
-        {Name="Frost Step", Display="Bước băng"},
-        {Name="Laser Beam", Display="Tia laser"},
-        {Name="Missile Volly", Display="Mưa tên lửa"},
+        {Name="Bubble Flail", Display="Chùy bong bóng"}, {Name="Crystalline Mirror", Display="Gương pha lê"},
+        {Name="Dark Flames", Display="Lửa bóng tối"}, {Name="Draedon's Tech", Display="Công nghệ Draedon"},
+        {Name="Elysian Beam", Display="Tia Elysian"}, {Name="Frost Step", Display="Bước băng"},
+        {Name="Laser Beam", Display="Tia laser"}, {Name="Missile Volly", Display="Mưa tên lửa"},
         {Name="Nuclear Strike", Display="Tấn công hạt nhân"}
     },
     ["Special (Đặc biệt)"] = {
-        {Name="Plasma Orbs", Display="Cầu plasma"},
-        {Name="Poison Serpent", Display="Rắn độc"},
-        {Name="Rainbow Bomb", Display="Bom cầu vồng"},
-        {Name="Red Saucer", Display="Đĩa bay đỏ"},
-        {Name="Sonar", Display="Sóng âm"},
-        {Name="The Void", Display="Hư không"},
-        {Name="Undead Staff", Display="Trượng xác sống"},
-        {Name="Yoru", Display="Yoru"}
+        {Name="Plasma Orbs", Display="Cầu plasma"}, {Name="Poison Serpent", Display="Rắn độc"},
+        {Name="Rainbow Bomb", Display="Bom cầu vồng"}, {Name="Red Saucer", Display="Đĩa bay đỏ"},
+        {Name="Sonar", Display="Sóng âm"}, {Name="The Void", Display="Hư không"},
+        {Name="Undead Staff", Display="Trượng xác sống"}, {Name="Yoru", Display="Yoru"}
     },
     ["Lava (Dung nham)"] = {
-        {Name="Lava Katana", Display="Kiếm Lava"},
-        {Name="Lava Ball", Display="Cầu Lava"},
-        {Name="Magam Fists", Display="Nắm đấm Magma"},
-        {Name="Lava Dash", Display="Lướt Lava"},
-        {Name="Volcano Sentry", Display="Lính canh núi lửa"},
-        {Name="Magma Spikes", Display="Gai Magma"},
+        {Name="Lava Katana", Display="Kiếm Lava"}, {Name="Lava Ball", Display="Cầu Lava"},
+        {Name="Magam Fists", Display="Nắm đấm Magma"}, {Name="Lava Dash", Display="Lướt Lava"},
+        {Name="Volcano Sentry", Display="Lính canh núi lửa"}, {Name="Magma Spikes", Display="Gai Magma"},
         {Name="Nibiru", Display="Nibiru"}
     },
     ["Earth (Đất)"] = {
-        {Name="Tectonic Hamer", Display="Búa địa chấn"},
-        {Name="Stone Throw", Display="Ném đá"},
-        {Name="Rocks Barrage", Display="Mưa đá"},
-        {Name="Large Boulder", Display="Tảng đá lớn"},
-        {Name="Burrow", Display="Đào hang"},
-        {Name="Stone Henge", Display="Đá tảng"},
+        {Name="Tectonic Hamer", Display="Búa địa chấn"}, {Name="Stone Throw", Display="Ném đá"},
+        {Name="Rocks Barrage", Display="Mưa đá"}, {Name="Large Boulder", Display="Tảng đá lớn"},
+        {Name="Burrow", Display="Đào hang"}, {Name="Stone Henge", Display="Đá tảng"},
         {Name="Earth Spikes", Display="Gai đất"}
     },
     ["Gravity (Trọng lực)"] = {
-        {Name="Gravity Orb", Display="Cầu trọng lực"},
-        {Name="Tectonic Burst", Display="Bùng nổ địa chấn"},
-        {Name="Zero Gravity", Display="Không trọng lực"},
-        {Name="Gravity Globe", Display="Quả địa cầu trọng lực"},
-        {Name="Hyper Sword", Display="Kiếm siêu tốc"},
-        {Name="Hyper Speed", Display="Tốc độ siêu cấp"}
+        {Name="Gravity Orb", Display="Cầu trọng lực"}, {Name="Tectonic Burst", Display="Bùng nổ địa chấn"},
+        {Name="Zero Gravity", Display="Không trọng lực"}, {Name="Gravity Globe", Display="Quả địa cầu trọng lực"},
+        {Name="Hyper Sword", Display="Kiếm siêu tốc"}, {Name="Hyper Speed", Display="Tốc độ siêu cấp"}
     },
     ["Ice (Băng)"] = {
-        {Name="Frost Staff", Display="Trượng băng giá"},
-        {Name="Frost Fire Ball", Display="Cầu lửa băng giá"},
-        {Name="Ice Disk", Display="Đĩa băng"},
-        {Name="Snow Ball", Display="Cầu tuyết"},
-        {Name="Ultracold Aura", Display="Hào quang siêu lạnh"},
-        {Name="Ice Spikes", Display="Gai băng"}
+        {Name="Frost Staff", Display="Trượng băng giá"}, {Name="Frost Fire Ball", Display="Cầu lửa băng giá"},
+        {Name="Ice Disk", Display="Đĩa băng"}, {Name="Snow Ball", Display="Cầu tuyết"},
+        {Name="Ultracold Aura", Display="Hào quang siêu lạnh"}, {Name="Ice Spikes", Display="Gai băng"}
     },
     ["Light (Ánh sáng)"] = {
-        {Name="Light Saber", Display="Gươm ánh sáng"},
-        {Name="Light Ball", Display="Cầu ánh sáng"},
-        {Name="Light Orbs", Display="Quả cầu ánh sáng"},
-        {Name="Blinding Light", Display="Ánh sáng chói lóa"},
-        {Name="Shooting Star", Display="Sao băng"},
-        {Name="Light Speed", Display="Tốc độ ánh sáng"},
+        {Name="Light Saber", Display="Gươm ánh sáng"}, {Name="Light Ball", Display="Cầu ánh sáng"},
+        {Name="Light Orbs", Display="Quả cầu ánh sáng"}, {Name="Blinding Light", Display="Ánh sáng chói lóa"},
+        {Name="Shooting Star", Display="Sao băng"}, {Name="Light Speed", Display="Tốc độ ánh sáng"},
         {Name="Light Beam", Display="Tia sáng"}
     },
     ["Nature (Thiên nhiên)"] = {
-        {Name="Christmas Tree Sword", Display="Kiếm cây thông"},
-        {Name="Plantoid", Display="Hình nhân cây"},
-        {Name="Spore Bombs", Display="Bom bào tử"},
-        {Name="Nature's Blessing", Display="Ban phước của thiên nhiên"},
-        {Name="Nuclear Spore", Display="Bào tử hạt nhân"},
-        {Name="Pine Burst", Display="Nổ thông"},
+        {Name="Christmas Tree Sword", Display="Kiếm cây thông"}, {Name="Plantoid", Display="Hình nhân cây"},
+        {Name="Spore Bombs", Display="Bom bào tử"}, {Name="Nature's Blessing", Display="Ban phước của thiên nhiên"},
+        {Name="Nuclear Spore", Display="Bào tử hạt nhân"}, {Name="Pine Burst", Display="Nổ thông"},
         {Name="Nature's Wrath", Display="Cơn thịnh nộ của thiên nhiên"}
     }
 }
@@ -201,24 +138,35 @@ local function equipItem(realItemName)
     end
 end
 
--- ===== HÀM KÉO THẢ DÙNG CHUNG =====
+-- ===== HÀM KÉO THẢ TỐI ƯU =====
 local function makeDraggable(frame, dragArea)
     local dragging, dragInput, dragStart, startPos
+    local activeTouch = nil
+
     dragArea.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
+            if input.UserInputType == Enum.UserInputType.Touch then activeTouch = input end
+            
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    if input == activeTouch then activeTouch = nil end
+                end
             end)
         end
     end)
+    
     dragArea.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
+            if input == activeTouch or input.UserInputType == Enum.UserInputType.MouseMovement then
+                dragInput = input
+            end
         end
     end)
+    
     UIS.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
@@ -232,6 +180,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DZ_NeonGiveUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999 -- Luôn nổi lên trên
 ScreenGui.Parent = LP:WaitForChild("PlayerGui")
 
 -- Nút Toggle Nhỏ (Luôn hiển thị)
@@ -258,7 +207,7 @@ MainFrame.Position = UDim2.new(0.5, -140, 0.5, -160)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Visible = false -- Ban đầu ẩn, bấm nút DZ mới hiện
+MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 local MainStroke = Instance.new("UIStroke", MainFrame)
@@ -266,21 +215,19 @@ MainStroke.Color = Color3.fromRGB(0, 255, 255)
 MainStroke.Thickness = 1.5
 MainStroke.Transparency = 0.2
 
--- Thanh Tiêu Đề
-local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 35)
-TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = MainFrame
-Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 8)
-makeDraggable(MainFrame, TitleBar)
+-- Thanh Tiêu Đề (Có viền phát sáng)
+local TitleBarFrame = Instance.new("Frame")
+TitleBarFrame.Size = UDim2.new(1, 0, 0, 35)
+TitleBarFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TitleBarFrame.BorderSizePixel = 0
+TitleBarFrame.Parent = MainFrame
+Instance.new("UICorner", TitleBarFrame).CornerRadius = UDim.new(0, 8)
+local TitleStroke = Instance.new("UIStroke", TitleBarFrame)
+TitleStroke.Color = Color3.fromRGB(0, 255, 255)
+TitleStroke.Thickness = 1.2
+TitleStroke.Transparency = 0.5
 
-local TitleGradient = Instance.new("UIGradient")
-TitleGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
-}
-TitleGradient.Parent = TitleBar
+makeDraggable(MainFrame, TitleBarFrame)
 
 local TitleText = Instance.new("TextLabel")
 TitleText.Size = UDim2.new(1, -40, 1, 0)
@@ -291,7 +238,7 @@ TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleText.TextSize = 13
 TitleText.Font = Enum.Font.GothamBold
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.Parent = TitleBar
+TitleText.Parent = TitleBarFrame
 
 -- Nút Ẩn
 local MinBtn = Instance.new("TextButton")
@@ -303,7 +250,7 @@ MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinBtn.Font = Enum.Font.GothamBold
 MinBtn.TextSize = 16
 MinBtn.BorderSizePixel = 0
-MinBtn.Parent = TitleBar
+MinBtn.Parent = TitleBarFrame
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 4)
 
 MinBtn.MouseButton1Click:Connect(function()
@@ -405,13 +352,15 @@ local function createTab(tabName, items)
             
             ItemBtn.MouseButton1Click:Connect(function()
                 equipItem(itemData.Name)
-                ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
-                ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-                ItemStroke.Color = Color3.fromRGB(0, 255, 255)
-                task.wait(0.15)
-                ItemBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-                ItemBtn.TextColor3 = Color3.fromRGB(220, 220, 240)
-                ItemStroke.Color = Color3.fromRGB(255, 0, 255)
+                task.spawn(function()
+                    ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+                    ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+                    ItemStroke.Color = Color3.fromRGB(0, 255, 255)
+                    task.wait(0.15)
+                    ItemBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+                    ItemBtn.TextColor3 = Color3.fromRGB(220, 220, 240)
+                    ItemStroke.Color = Color3.fromRGB(255, 0, 255)
+                end)
             end)
         end
     end)
