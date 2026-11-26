@@ -1,135 +1,59 @@
+--[[
+    DZ PROFESSIONAL HUB - PHẦN 1/3
+    Features: Core Logic, Movement, No Stun, Fix Lag
+]]
+
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local LP = Players.LocalPlayer
+local PlayerGui = LP:WaitForChild("PlayerGui")
 
 -- ==========================================
--- 1. GIỮ NGUYÊN LOGIC GIVE ITEM CỦA MÀY
+-- 1. DATA & STATE
 -- ==========================================
 local ITEM_LIST = {
-    ["Bone (Xương)"] = {
-        {Name="Blaster", Display="Súng xương"}, {Name="Bone Surge", Display="Dâng trào xương"},
-        {Name="Bones Barrage", Display="Mưa xương"}, {Name="Flying Bone", Display="Xương bay"},
-        {Name="Judgement Blast", Display="Vụ nổ phán xét"}, {Name="Twin Blasters", Display="Súng xương đôi"}
-    },
-    ["Crystal (Pha lê)"] = {
-        {Name="Crystal Cleaver", Display="Rìu pha lê"}, {Name="Crystal Eruption", Display="Pha lê phun trào"},
-        {Name="Crystal Mine", Display="Mìn pha lê"}, {Name="Crystal Surge", Display="Dâng trào pha lê"},
-        {Name="Energy Crash", Display="Năng lượng va chạm"}, {Name="Energy Crown", Display="Vương miện năng lượng"},
-        {Name="Energy Crystal", Display="Pha lê năng lượng"}
-    },
-    ["Darkness (Bóng tối)"] = {
-        {Name="Abyss", Display="Vực thẳm"}, {Name="Dark Arc", Display="Cung bóng tối"},
-        {Name="Dark Duo", Display="Cặp đôi bóng tối"}, {Name="Dark Hold", Display="Trói bóng tối"},
-        {Name="Shadow Sword", Display="Kiếm bóng"}, {Name="Unseen Barrage", Display="Mưa đòn vô hình"},
-        {Name="Unseen Hands", Display="Bàn tay vô hình"}
-    },
-    ["Devil (Ác quỷ)"] = {
-        {Name="Dark Tsunami", Display="Sóng thần bóng tối"}, {Name="Demon Lock", Display="Khóa quỷ"},
-        {Name="Demon Orb", Display="Cầu quỷ"}, {Name="Evil Bullet", Display="Đạn tà ác"},
-        {Name="Evil Flash", Display="Chớp tà ác"}, {Name="Fangs Barrage", Display="Mưa nanh"}
-    },
-    ["Fire (Lửa)"] = {
-        {Name="Combust", Display="Bốc cháy"}, {Name="Comet", Display="Sao chổi"},
-        {Name="Fire Ball", Display="Cầu lửa"}, {Name="Fire Bomb", Display="Bom lửa"},
-        {Name="Fire Fly", Display="Ruồi lửa"}, {Name="Fire Shower", Display="Mưa lửa"},
-        {Name="Fire Sword", Display="Kiếm lửa"}
-    },
-    ["Space (Không gian)"] = {
-        {Name="Asteroid Belt", Display="Vành đai tiểu hành tinh"}, {Name="Blackhole Orb", Display="Cầu hố đen"},
-        {Name="Cosmic Remote", Display="Điều khiển vũ trụ"}, {Name="Meteor Jam", Display="Mưa thiên thạch"},
-        {Name="Moon Splitter", Display="Xẻ đôi mặt trăng"}, {Name="Space Gun", Display="Súng không gian"},
-        {Name="Space Saucer", Display="Đĩa bay"}
-    },
-    ["Super Sonic (Siêu thanh)"] = {
-        {Name="Rebound Blast", Display="Nổ dội"}, {Name="Rebound Teleport", Display="Dịch chuyển dội"},
-        {Name="Sonic Barrage", Display="Mưa âm thanh"}, {Name="Sonic Blaster", Display="Súng âm thanh"},
-        {Name="Sonic Boom", Display="Nổ âm thanh"}, {Name="Sonic Twister", Display="Lốc xoáy âm thanh"},
-        {Name="Super Sonic Wave", Display="Sóng siêu âm"}
-    },
-    ["Technology (Công nghệ)"] = {
-        {Name="Hyper Slash", Display="Chém siêu tốc"}, {Name="Hyper Sword", Display="Kiếm siêu tốc"},
-        {Name="Orbital", Display="Quỹ đạo"}, {Name="Photon Blast", Display="Nổ photon"},
-        {Name="Tesla Turret", Display="Trụ súng Tesla"}, {Name="Tesseract", Display="Khối Tesseract"},
-        {Name="Twin-Photon Blast", Display="Nổ song photon"}
-    },
-    ["Thunder (Sấm sét)"] = {
-        {Name="Bolt", Display="Tia sét"}, {Name="Discharge", Display="Phóng điện"},
-        {Name="Energy Beam", Display="Tia năng lượng"}, {Name="Flying Nimbus", Display="Mây bay"},
-        {Name="Lightning Strike", Display="Sét đánh"}, {Name="Storm", Display="Bão tố"},
-        {Name="Thunder Staff", Display="Trượng sấm sét"}
-    },
-    ["Time (Thời gian)"] = {
-        {Name="Grand Clock", Display="Đồng hồ lớn"}, {Name="Tempo Beam", Display="Tia tiết tấu"},
-        {Name="Temporal Gate", Display="Cổng thời gian"}, {Name="Time Trap", Display="Bẫy thời gian"},
-        {Name="Warp Barrage", Display="Mưa biến dạng"}, {Name="Warp Bomb", Display="Bom biến dạng"}
-    },
-    ["Turret (Trụ súng)"] = {
-        {Name="Energy Ball", Display="Cầu năng lượng"}, {Name="Guide Turret", Display="Trụ súng dẫn đường"},
-        {Name="Security Guns", Display="Súng an ninh"}
-    },
-    ["Venom (Nọc độc)"] = {
-        {Name="Acid Rain", Display="Mưa axit"}, {Name="Bubbling Venom", Display="Nọc độc sủi bọt"},
-        {Name="Hardened Venom", Display="Nọc độc cứng"}, {Name="Poison Bullet", Display="Đạn độc"},
-        {Name="Poison Demon", Display="Quỷ độc"}, {Name="Venom Stream", Display="Suối nọc độc"}
-    },
-    ["Water (Nước)"] = {
-        {Name="Aqua Trident", Display="Đinh ba nước"}, {Name="Big Tsunami", Display="Sóng thần lớn"},
-        {Name="Bubbles", Display="Bong bóng"}, {Name="Jellyfish", Display="Sứa"},
-        {Name="Water Beam", Display="Tia nước"}, {Name="Whirlpool", Display="Xoáy nước"}
-    },
-    ["Rebirth (Tái sinh)"] = {
-        {Name="Bubble Flail", Display="Chùy bong bóng"}, {Name="Crystalline Mirror", Display="Gương pha lê"},
-        {Name="Dark Flames", Display="Lửa bóng tối"}, {Name="Draedon's Tech", Display="Công nghệ Draedon"},
-        {Name="Elysian Beam", Display="Tia Elysian"}, {Name="Frost Step", Display="Bước băng"},
-        {Name="Laser Beam", Display="Tia laser"}, {Name="Missile Volly", Display="Mưa tên lửa"},
-        {Name="Nuclear Strike", Display="Tấn công hạt nhân"}
-    },
-    ["Special (Đặc biệt)"] = {
-        {Name="Plasma Orbs", Display="Cầu plasma"}, {Name="Poison Serpent", Display="Rắn độc"},
-        {Name="Rainbow Bomb", Display="Bom cầu vồng"}, {Name="Red Saucer", Display="Đĩa bay đỏ"},
-        {Name="Sonar", Display="Sóng âm"}, {Name="The Void", Display="Hư không"},
-        {Name="Undead Staff", Display="Trượng xác sống"}, {Name="Yoru", Display="Yoru"}
-    },
-    ["Lava (Dung nham)"] = {
-        {Name="Lava Katana", Display="Kiếm Lava"}, {Name="Lava Ball", Display="Cầu Lava"},
-        {Name="Magam Fists", Display="Nắm đấm Magma"}, {Name="Lava Dash", Display="Lướt Lava"},
-        {Name="Volcano Sentry", Display="Lính canh núi lửa"}, {Name="Magma Spikes", Display="Gai Magma"},
-        {Name="Nibiru", Display="Nibiru"}
-    },
-    ["Earth (Đất)"] = {
-        {Name="Tectonic Hamer", Display="Búa địa chấn"}, {Name="Stone Throw", Display="Ném đá"},
-        {Name="Rocks Barrage", Display="Mưa đá"}, {Name="Large Boulder", Display="Tảng đá lớn"},
-        {Name="Burrow", Display="Đào hang"}, {Name="Stone Henge", Display="Đá tảng"},
-        {Name="Earth Spikes", Display="Gai đất"}
-    },
-    ["Gravity (Trọng lực)"] = {
-        {Name="Gravity Orb", Display="Cầu trọng lực"}, {Name="Tectonic Burst", Display="Bùng nổ địa chấn"},
-        {Name="Zero Gravity", Display="Không trọng lực"}, {Name="Gravity Globe", Display="Quả địa cầu trọng lực"},
-        {Name="Hyper Sword", Display="Kiếm siêu tốc"}, {Name="Hyper Speed", Display="Tốc độ siêu cấp"}
-    },
-    ["Ice (Băng)"] = {
-        {Name="Frost Staff", Display="Trượng băng giá"}, {Name="Frost Fire Ball", Display="Cầu lửa băng giá"},
-        {Name="Ice Disk", Display="Đĩa băng"}, {Name="Snow Ball", Display="Cầu tuyết"},
-        {Name="Ultracold Aura", Display="Hào quang siêu lạnh"}, {Name="Ice Spikes", Display="Gai băng"}
-    },
-    ["Light (Ánh sáng)"] = {
-        {Name="Light Saber", Display="Gươm ánh sáng"}, {Name="Light Ball", Display="Cầu ánh sáng"},
-        {Name="Light Orbs", Display="Quả cầu ánh sáng"}, {Name="Blinding Light", Display="Ánh sáng chói lóa"},
-        {Name="Shooting Star", Display="Sao băng"}, {Name="Light Speed", Display="Tốc độ ánh sáng"},
-        {Name="Light Beam", Display="Tia sáng"}
-    },
-    ["Nature (Thiên nhiên)"] = {
-        {Name="Christmas Tree Sword", Display="Kiếm cây thông"}, {Name="Plantoid", Display="Hình nhân cây"},
-        {Name="Spore Bombs", Display="Bom bào tử"}, {Name="Nature's Blessing", Display="Ban phước của thiên nhiên"},
-        {Name="Nuclear Spore", Display="Bào tử hạt nhân"}, {Name="Pine Burst", Display="Nổ thông"},
-        {Name="Nature's Wrath", Display="Cơn thịnh nộ của thiên nhiên"}
-    }
+    ["Bone (Xương)"] = {{Name="Blaster", Display="Súng xương"}, {Name="Bone Surge", Display="Dâng trào xương"}, {Name="Bones Barrage", Display="Mưa xương"}, {Name="Flying Bone", Display="Xương bay"}, {Name="Judgement Blast", Display="Vụ nổ phán xét"}, {Name="Twin Blasters", Display="Súng xương đôi"}},
+    ["Crystal (Pha lê)"] = {{Name="Crystal Cleaver", Display="Rìu pha lê"}, {Name="Crystal Eruption", Display="Pha lê phun trào"}, {Name="Crystal Mine", Display="Mìn pha lê"}, {Name="Crystal Surge", Display="Dâng trào pha lê"}, {Name="Energy Crash", Display="Năng lượng va chạm"}, {Name="Energy Crown", Display="Vương miện năng lượng"}, {Name="Energy Crystal", Display="Pha lê năng lượng"}},
+    ["Darkness (Bóng tối)"] = {{Name="Abyss", Display="Vực thẳm"}, {Name="Dark Arc", Display="Cung bóng tối"}, {Name="Dark Duo", Display="Cặp đôi bóng tối"}, {Name="Dark Hold", Display="Trói bóng tối"}, {Name="Shadow Sword", Display="Kiếm bóng"}, {Name="Unseen Barrage", Display="Mưa đòn vô hình"}, {Name="Unseen Hands", Display="Bàn tay vô hình"}},
+    ["Devil (Ác quỷ)"] = {{Name="Dark Tsunami", Display="Sóng thần bóng tối"}, {Name="Demon Lock", Display="Khóa quỷ"}, {Name="Demon Orb", Display="Cầu quỷ"}, {Name="Evil Bullet", Display="Đạn tà ác"}, {Name="Evil Flash", Display="Chớp tà ác"}, {Name="Fangs Barrage", Display="Mưa nanh"}},
+    ["Fire (Lửa)"] = {{Name="Combust", Display="Bốc cháy"}, {Name="Comet", Display="Sao chổi"}, {Name="Fire Ball", Display="Cầu lửa"}, {Name="Fire Bomb", Display="Bom lửa"}, {Name="Fire Fly", Display="Ruồi lửa"}, {Name="Fire Shower", Display="Mưa lửa"}, {Name="Fire Sword", Display="Kiếm lửa"}},
+    ["Space (Không gian)"] = {{Name="Asteroid Belt", Display="Vành đai tiểu hành tinh"}, {Name="Blackhole Orb", Display="Cầu hố đen"}, {Name="Cosmic Remote", Display="Điều khiển vũ trụ"}, {Name="Meteor Jam", Display="Mưa thiên thạch"}, {Name="Moon Splitter", Display="Xẻ đôi mặt trăng"}, {Name="Space Gun", Display="Súng không gian"}, {Name="Space Saucer", Display="Đĩa bay"}},
+    ["Super Sonic (Siêu thanh)"] = {{Name="Rebound Blast", Display="Nổ dội"}, {Name="Rebound Teleport", Display="Dịch chuyển dội"}, {Name="Sonic Barrage", Display="Mưa âm thanh"}, {Name="Sonic Blaster", Display="Súng âm thanh"}, {Name="Sonic Boom", Display="Nổ âm thanh"}, {Name="Sonic Twister", Display="Lốc xoáy âm thanh"}, {Name="Super Sonic Wave", Display="Sóng siêu âm"}},
+    ["Technology (Công nghệ)"] = {{Name="Hyper Slash", Display="Chém siêu tốc"}, {Name="Hyper Sword", Display="Kiếm siêu tốc"}, {Name="Orbital", Display="Quỹ đạo"}, {Name="Photon Blast", Display="Nổ photon"}, {Name="Tesla Turret", Display="Trụ súng Tesla"}, {Name="Tesseract", Display="Khối Tesseract"}, {Name="Twin-Photon Blast", Display="Nổ song photon"}},
+    ["Thunder (Sấm sét)"] = {{Name="Bolt", Display="Tia sét"}, {Name="Discharge", Display="Phóng điện"}, {Name="Energy Beam", Display="Tia năng lượng"}, {Name="Flying Nimbus", Display="Mây bay"}, {Name="Lightning Strike", Display="Sét đánh"}, {Name="Storm", Display="Bão tố"}, {Name="Thunder Staff", Display="Trượng sấm sét"}},
+    ["Time (Thời gian)"] = {{Name="Grand Clock", Display="Đồng hồ lớn"}, {Name="Tempo Beam", Display="Tia tiết tấu"}, {Name="Temporal Gate", Display="Cổng thời gian"}, {Name="Time Trap", Display="Bẫy thời gian"}, {Name="Warp Barrage", Display="Mưa biến dạng"}, {Name="Warp Bomb", Display="Bom biến dạng"}},
+    ["Turret (Trụ súng)"] = {{Name="Energy Ball", Display="Cầu năng lượng"}, {Name="Guide Turret", Display="Trụ súng dẫn đường"}, {Name="Security Guns", Display="Súng an ninh"}},
+    ["Venom (Nọc độc)"] = {{Name="Acid Rain", Display="Mưa axit"}, {Name="Bubbling Venom", Display="Nọc độc sủi bọt"}, {Name="Hardened Venom", Display="Nọc độc cứng"}, {Name="Poison Bullet", Display="Đạn độc"}, {Name="Poison Demon", Display="Quỷ độc"}, {Name="Venom Stream", Display="Suối nọc độc"}},
+    ["Water (Nước)"] = {{Name="Aqua Trident", Display="Đinh ba nước"}, {Name="Big Tsunami", Display="Sóng thần lớn"}, {Name="Bubbles", Display="Bong bóng"}, {Name="Jellyfish", Display="Sứa"}, {Name="Water Beam", Display="Tia nước"}, {Name="Whirlpool", Display="Xoáy nước"}},
+    ["Rebirth (Tái sinh)"] = {{Name="Bubble Flail", Display="Chùy bong bóng"}, {Name="Crystalline Mirror", Display="Gương pha lê"}, {Name="Dark Flames", Display="Lửa bóng tối"}, {Name="Draedon's Tech", Display="Công nghệ Draedon"}, {Name="Elysian Beam", Display="Tia Elysian"}, {Name="Frost Step", Display="Bước băng"}, {Name="Laser Beam", Display="Tia laser"}, {Name="Missile Volly", Display="Mưa tên lửa"}, {Name="Nuclear Strike", Display="Tấn công hạt nhân"}},
+    ["Special (Đặc biệt)"] = {{Name="Plasma Orbs", Display="Cầu plasma"}, {Name="Poison Serpent", Display="Rắn độc"}, {Name="Rainbow Bomb", Display="Bom cầu vồng"}, {Name="Red Saucer", Display="Đĩa bay đỏ"}, {Name="Sonar", Display="Sóng âm"}, {Name="The Void", Display="Hư không"}, {Name="Undead Staff", Display="Trượng xác sống"}, {Name="Yoru", Display="Yoru"}},
+    ["Lava (Dung nham)"] = {{Name="Lava Katana", Display="Kiếm Lava"}, {Name="Lava Ball", Display="Cầu Lava"}, {Name="Magam Fists", Display="Nắm đấm Magma"}, {Name="Lava Dash", Display="Lướt Lava"}, {Name="Volcano Sentry", Display="Lính canh núi lửa"}, {Name="Magma Spikes", Display="Gai Magma"}, {Name="Nibiru", Display="Nibiru"}},
+    ["Earth (Đất)"] = {{Name="Tectonic Hamer", Display="Búa địa chấn"}, {Name="Stone Throw", Display="Ném đá"}, {Name="Rocks Barrage", Display="Mưa đá"}, {Name="Large Boulder", Display="Tảng đá lớn"}, {Name="Burrow", Display="Đào hang"}, {Name="Stone Henge", Display="Đá tảng"}, {Name="Earth Spikes", Display="Gai đất"}},
+    ["Gravity (Trọng lực)"] = {{Name="Gravity Orb", Display="Cầu trọng lực"}, {Name="Tectonic Burst", Display="Bùng nổ địa chấn"}, {Name="Zero Gravity", Display="Không trọng lực"}, {Name="Gravity Globe", Display="Quả địa cầu trọng lực"}, {Name="Hyper Sword", Display="Kiếm siêu tốc"}, {Name="Hyper Speed", Display="Tốc độ siêu cấp"}},
+    ["Ice (Băng)"] = {{Name="Frost Staff", Display="Trượng băng giá"}, {Name="Frost Fire Ball", Display="Cầu lửa băng giá"}, {Name="Ice Disk", Display="Đĩa băng"}, {Name="Snow Ball", Display="Cầu tuyết"}, {Name="Ultracold Aura", Display="Hào quang siêu lạnh"}, {Name="Ice Spikes", Display="Gai băng"}},
+    ["Light (Ánh sáng)"] = {{Name="Light Saber", Display="Gươm ánh sáng"}, {Name="Light Ball", Display="Cầu ánh sáng"}, {Name="Light Orbs", Display="Quả cầu ánh sáng"}, {Name="Blinding Light", Display="Ánh sáng chói lóa"}, {Name="Shooting Star", Display="Sao băng"}, {Name="Light Speed", Display="Tốc độ ánh sáng"}, {Name="Light Beam", Display="Tia sáng"}},
+    ["Nature (Thiên nhiên)"] = {{Name="Christmas Tree Sword", Display="Kiếm cây thông"}, {Name="Plantoid", Display="Hình nhân cây"}, {Name="Spore Bombs", Display="Bom bào tử"}, {Name="Nature's Blessing", Display="Ban phước của thiên nhiên"}, {Name="Nuclear Spore", Display="Bào tử hạt nhân"}, {Name="Pine Burst", Display="Nổ thông"}, {Name="Nature's Wrath", Display="Cơn thịnh nộ của thiên nhiên"}}
 }
 
+local States = {
+    ESP = false, ESP_Health = true, ESP_Distance = true, ESP_Name = true,
+    Farm = false, Noclip = false, Fly = false, NoStun = false, NoHurtCam = false, FixLag = false,
+    Speed = 16, Jump = 50, FlySpeed = 5, SelectedItem = "Fire Ball"
+}
+
+local ESP_Objects = {}
+local FlyConnection = nil
+local BV, BG = nil, nil
+local OriginalLighting = {Brightness = Lighting.Brightness, GlobalShadows = Lighting.GlobalShadows, EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale}
+
+-- ==========================================
+-- 2. HÀM GIVE ITEM (GIỮ NGUYÊN)
+-- ==========================================
 local function equipItem(realItemName)
     if game.PlaceId == 10253248401 then
         local remote = RS:FindFirstChild("RemoteEvent")
@@ -143,147 +67,148 @@ local function equipItem(realItemName)
 end
 
 -- ==========================================
--- 2. BIẾN TOÀN CỤC & TRẠNG THÁI
+-- 3. LOGIC MOVEMENT, NO STUN, NO HURT CAM
 -- ==========================================
-local States = {
-    ESP = false,
-    ESP_Health = true,
-    ESP_Distance = true,
-    ESP_Name = true,
-    Farm = false,
-    Noclip = false,
-    Fly = false,
-    Speed = 16,
-    Jump = 50,
-    FlySpeed = 5
-}
-
-local ESP_Objects = {}
-local FlyConnection = nil
-local BV = nil
-
--- ==========================================
--- 3. HIỆU ỨNG & TIỆN ÍCH UI
--- ==========================================
-local function CreateRipple(parent, x, y)
-    local ripple = Instance.new("Frame")
-    ripple.Parent = parent
-    ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ripple.BackgroundTransparency = 0.6
-    ripple.Position = UDim2.new(0, x, 0, y)
-    ripple.Size = UDim2.new(0, 0, 0, 0)
-    ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-    ripple.BorderSizePixel = 0
-    local corner = Instance.new("UICorner", ripple)
-    corner.CornerRadius = UDim.new(1, 0)
-    
-    local tween = TweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 100, 0, 100),
-        BackgroundTransparency = 1
-    })
-    tween:Play()
-    tween.Completed:Connect(function() ripple:Destroy() end)
-end
-
-local function CreateButton(parent, text, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -10, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.Text = " " .. text
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.Font = Enum.Font.GothamMedium
-    btn.TextSize = 12
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.BorderSizePixel = 0
-    btn.Parent = parent
-    
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Color = Color3.fromRGB(60, 60, 60)
-    stroke.Thickness = 1
-    
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255,255,255), TextColor3 = Color3.fromRGB(0,0,0)}):Play()
-        stroke.Color = Color3.fromRGB(255,255,255)
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20,20,20), TextColor3 = Color3.fromRGB(200,200,200)}):Play()
-        stroke.Color = Color3.fromRGB(60,60,60)
-    end)
-    
-    btn.MouseButton1Click:Connect(function()
-        CreateRipple(btn, btn.AbsoluteSize.X/2, btn.AbsoluteSize.Y/2)
-        callback()
-    end)
-    return btn
-end
-
-local function CreateSlider(parent, text, min, max, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 40)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 15)
-    label.BackgroundTransparency = 1
-    label.Text = text .. ": " .. default
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 11
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
-    
-    local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(1, 0, 0, 4)
-    bar.Position = UDim2.new(0, 0, 0, 25)
-    bar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    bar.BorderSizePixel = 0
-    bar.Parent = frame
-    
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    fill.BorderSizePixel = 0
-    fill.Parent = bar
-    
-    local circle = Instance.new("Frame")
-    circle.Size = UDim2.new(0, 8, 0, 8)
-    circle.Position = UDim2.new(1, -4, 0.5, -4)
-    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    circle.BorderSizePixel = 0
-    circle.Parent = fill
-    Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
-    
-    local dragging = false
-    local function update(input)
-        local pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        local val = math.floor(min + (max - min) * pos)
-        label.Text = text .. ": " .. val
-        callback(val)
+RunService.Heartbeat:Connect(function()
+    if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+        local hum = LP.Character:FindFirstChildOfClass("Humanoid")
+        
+        -- Ép Speed và Jump chống bị reset
+        if hum.WalkSpeed ~= States.Speed then hum.WalkSpeed = States.Speed end
+        if hum.JumpPower ~= States.Jump then hum.JumpPower = States.Jump end
+        
+        -- No Stun (Chống choáng/ngã)
+        if States.NoStun then
+            hum.PlatformStand = false
+            if hum:GetState() == Enum.HumanoidStateType.Ragdoll or hum:GetState() == Enum.HumanoidStateType.FallingDown then
+                hum:ChangeState(Enum.HumanoidStateType.Running)
+            end
+            for _, v in pairs(LP.Character:GetDescendants()) do
+                if (v:IsA("BodyPosition") or v:IsA("BodyVelocity")) and v.Name ~= "FlyBV" and v.Name ~= "FlyBG" then
+                    v:Destroy()
+                end
+            end
+        end
+        
+        -- No Hurt Cam (Tắt rung màn hình khi bị đánh)
+        if States.NoHurtCam then
+            local playerModule = LP.PlayerScripts:FindFirstChild("PlayerModule")
+            if playerModule then
+                local camModule = require(playerModule):GetCameras()
+                if camModule and camModule.activeCameraController then
+                    -- Ghi đè hàm rung (nếu có)
+                    pcall(function() camModule.activeCameraController.Update = function() end end)
+                end
+            end
+        end
     end
-    
-    bar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            update(input)
+end)
+
+-- Noclip
+RunService.Stepped:Connect(function()
+    if States.Noclip and LP.Character then
+        for _, v in pairs(LP.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide then
+                v.CanCollide = false
+            end
         end
-    end)
-    UIS.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            update(input)
+    end
+end)
+
+-- Fly Logic
+local function ToggleFly()
+    if States.Fly then
+        local char = LP.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local hrp = char.HumanoidRootPart
+            BV = Instance.new("BodyVelocity")
+            BV.Name = "FlyBV"
+            BV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            BV.Velocity = Vector3.zero
+            BV.Parent = hrp
+            
+            BG = Instance.new("BodyGyro")
+            BG.Name = "FlyBG"
+            BG.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+            BG.P = 1000 BG.D = 50 BG.Parent = hrp
+            
+            FlyConnection = RunService.RenderStepped:Connect(function()
+                if not States.Fly then return end
+                local cam = Workspace.CurrentCamera
+                local moveDir = Vector3.zero
+                if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+                if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
+                
+                if moveDir.Magnitude > 0 then BV.Velocity = moveDir.Unit * (States.FlySpeed * 10)
+                else BV.Velocity = Vector3.zero end
+                BG.CFrame = cam.CFrame
+            end)
         end
-    end)
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
+    else
+        if BV then BV:Destroy() BV = nil end
+        if BG then BG:Destroy() BG = nil end
+        if FlyConnection then FlyConnection:Disconnect() FlyConnection = nil end
+    end
+end
+
+-- Super Fix Lag (Dọn dẹp tận gốc)
+local function ToggleFixLag()
+    if States.FixLag then
+        -- Hạ đồ họa
+        Lighting.Brightness = 0
+        Lighting.GlobalShadows = false
+        Lighting.EnvironmentDiffuseScale = 0
+        Lighting.EnvironmentSpecularScale = 0
+        
+        -- Quét và xóa rác
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") or obj:IsA("Explosion") then
+                obj.Enabled = false
+            end
+            if obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
         end
-    end)
+        -- Tắt mấy cái bảng hiệu rác
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
+                if not obj:FindFirstAncestorOfClass("Model") or (not obj.Parent:FindFirstChild("Humanoid")) then
+                    obj.Enabled = false
+                end
+            end
+        end
+    else
+        -- Khôi phục đồ họa (nếu tắt)
+        Lighting.Brightness = OriginalLighting.Brightness
+        Lighting.GlobalShadows = OriginalLighting.GlobalShadows
+        Lighting.EnvironmentDiffuseScale = OriginalLighting.EnvironmentDiffuseScale
+    end
 end
 -- ==========================================
--- 4. LOGIC ESP (HIGHLIGHT + BILLBOARD)
+-- 4. LOGIC ESP (ĐÃ FIX LỖI ĐÉO HIỆN)
 -- ==========================================
 local function UpdateESP()
+    -- Dọn rác nếu thằng kia out game hoặc chết
+    for plr, data in pairs(ESP_Objects) do
+        if not plr.Parent or not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
+            if data.Highlight then data.Highlight:Destroy() end
+            if data.Billboard then data.Billboard:Destroy() end
+            ESP_Objects[plr] = nil
+        end
+    end
+
+    if not States.ESP then
+        for plr, data in pairs(ESP_Objects) do
+            if data.Highlight then data.Highlight.Enabled = false end
+            if data.Billboard then data.Billboard.Enabled = false end
+        end
+        return
+    end
+
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             if not ESP_Objects[player] then
@@ -329,8 +254,8 @@ local function UpdateESP()
                 if States.ESP_Distance then text = text .. "[" .. dist .. "m]" end
                 data.Text.Text = text
                 
-                data.Highlight.Enabled = States.ESP
-                data.Billboard.Enabled = States.ESP
+                data.Highlight.Enabled = true
+                data.Billboard.Enabled = true
             end
         end
     end
@@ -347,17 +272,17 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 -- ==========================================
--- 5. LOGIC AUTO FARM
+-- 5. AUTO FARM (CHỌN SKILL -> CLICK NGƯỜI)
 -- ==========================================
 local function GetClosestPlayer()
     local closest = nil
     local minDist = math.huge
     local myHRP = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-    
     if not myHRP then return nil end
     
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            -- Bỏ qua nếu có vòng bảo vệ bất tử
             local hasFF = player.Character:FindFirstChildOfClass("ForceField") ~= nil
             if not hasFF then
                 local hrp = player.Character.HumanoidRootPart
@@ -380,128 +305,59 @@ task.spawn(function()
                 local myHRP = LP.Character.HumanoidRootPart
                 local targetHRP = target.Character.HumanoidRootPart
                 
+                -- Tele đến sát mặt
                 local dir = (targetHRP.Position - myHRP.Position).Unit
                 myHRP.CFrame = CFrame.new(targetHRP.Position - dir * 3, targetHRP.Position)
                 
+                -- Tìm skill mày đã chọn
                 local backpack = LP:FindFirstChild("Backpack")
                 local char = LP.Character
+                local toolToUse = nil
                 
-                local function useTools(container)
-                    for _, tool in ipairs(container:GetChildren()) do
-                        if tool:IsA("Tool") then
-                            if tool.Parent == backpack then
-                                tool.Parent = char
-                            end
-                            if tool:FindFirstChild("Handle") then
-                                pcall(function()
-                                    tool:Activate()
-                                    local mouse = LP:GetMouse()
-                                    if mouse then
-                                        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then 
-                                            local vim = game:GetService("VirtualInputManager")
-                                            vim:SendMouseButtonEvent(mouse.X, mouse.Y, 0, true, game, 1)
-                                            vim:SendMouseButtonEvent(mouse.X, mouse.Y, 0, false, game, 1)
-                                        end
-                                    end
-                                end)
+                for _, container in pairs({backpack, char}) do
+                    if container then
+                        for _, tool in pairs(container:GetChildren()) do
+                            if tool:IsA("Tool") and (tool.Name == States.SelectedItem or tool.Name:find(States.SelectedItem)) then
+                                toolToUse = tool
+                                break
                             end
                         end
                     end
                 end
                 
-                useTools(backpack)
-                useTools(char)
-            end
-        end
-    end
-end)
-
--- ==========================================
--- 6. LOGIC MOVEMENT (SPEED, JUMP, NOCLIP, FLY)
--- ==========================================
-local function ApplyMovement()
-    if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
-        local hum = LP.Character:FindFirstChildOfClass("Humanoid")
-        hum.WalkSpeed = States.Speed
-        hum.JumpPower = States.Jump
-        hum.UseJumpPower = true
-    end
-end
-
-LP.CharacterAdded:Connect(function(char)
-    task.wait(1)
-    ApplyMovement()
-end)
-
-UIS.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then
-        if MainFrame then MainFrame.Visible = not MainFrame.Visible end
-    end
-end)
-
-RunService.Stepped:Connect(function()
-    if States.Noclip and LP.Character then
-        for _, v in pairs(LP.Character:GetDescendants()) do
-            if v:IsA("BasePart") and v.CanCollide then
-                v.CanCollide = false
-            end
-        end
-    end
-end)
-
-local function ToggleFly()
-    if States.Fly then
-        local char = LP.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local hrp = char.HumanoidRootPart
-            
-            BV = Instance.new("BodyVelocity")
-            BV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            BV.Velocity = Vector3.zero
-            BV.Parent = hrp
-            
-            local BG = Instance.new("BodyGyro")
-            BG.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
-            BG.P = 1000
-            BG.D = 50
-            BG.Parent = hrp
-            
-            FlyConnection = RunService.RenderStepped:Connect(function()
-                if not States.Fly then return end
-                local cam = Workspace.CurrentCamera
-                local moveDir = Vector3.zero
-                
-                if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
-                if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
-                if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
-                if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
-                if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
-                if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
-                
-                if moveDir.Magnitude > 0 then
-                    BV.Velocity = moveDir.Unit * (States.FlySpeed * 10)
-                else
-                    BV.Velocity = Vector3.zero
+                if toolToUse then
+                    -- Trang bị tool
+                    if toolToUse.Parent == backpack then
+                        toolToUse.Parent = char
+                    end
+                    -- Bấm xài skill
+                    pcall(function() toolToUse:Activate() end)
+                    
+                    -- Giả lập click vào đầu địch
+                    local cam = Workspace.CurrentCamera
+                    local screenPos, onScreen = cam:WorldToViewportPoint(targetHRP.Position)
+                    if onScreen then
+                        local vim = game:GetService("VirtualInputManager")
+                        pcall(function()
+                            vim:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 1)
+                            task.wait(0.05)
+                            vim:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 1)
+                        end)
+                    end
                 end
-                BG.CFrame = cam.CFrame
-            end)
+            end
         end
-    else
-        if BV then BV:Destroy() BV = nil end
-        if FlyConnection then FlyConnection:Disconnect() FlyConnection = nil end
     end
-end
-
+end)
 -- ==========================================
--- 7. KHUNG UI CHÍNH & TABS
+-- 6. UI BUILDER (BLACK & WHITE PRO)
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DZ_PRO_UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 999
-ScreenGui.Parent = LP:WaitForChild("PlayerGui")
+ScreenGui.Parent = PlayerGui
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -519,6 +375,7 @@ ToggleStroke.Color = Color3.fromRGB(255, 255, 255)
 ToggleStroke.Thickness = 2
 
 local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 500, 0, 350)
 MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
@@ -543,35 +400,12 @@ local TitleText = Instance.new("TextLabel")
 TitleText.Size = UDim2.new(1, -80, 1, 0)
 TitleText.Position = UDim2.new(0, 15, 0, 0)
 TitleText.BackgroundTransparency = 1
-TitleText.Text = "DZ | PROFESSIONAL HUB"
+TitleText.Text = "DZ | ULTIMATE"
 TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleText.Font = Enum.Font.GothamBold
 TitleText.TextSize = 14
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.Parent = TitleBar
-
-local dragging, dragInput, dragStart, startPos
-TitleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-TitleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-UIS.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
@@ -594,7 +428,6 @@ TabBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 TabBar.BorderSizePixel = 0
 TabBar.Parent = MainFrame
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(0, 8)
-
 local TabLayout = Instance.new("UIListLayout", TabBar)
 TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabLayout.Padding = UDim.new(0, 5)
@@ -623,20 +456,12 @@ local function CreateTab(name, order)
     btn.Parent = TabBar
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
     
-    local page = Instance.new("ScrollingFrame")
+    local page = Instance.new("Frame")
     page.Size = UDim2.new(1, -20, 1, -20)
     page.Position = UDim2.new(0, 10, 0, 10)
     page.BackgroundTransparency = 1
-    page.ScrollBarThickness = 2
-    page.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
-    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.Visible = false
     page.Parent = ContentArea
-    
-    local layout = Instance.new("UIListLayout", page)
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 8)
     
     Pages[name] = page
     
@@ -644,7 +469,6 @@ local function CreateTab(name, order)
         for _, p in pairs(Pages) do p.Visible = false end
         page.Visible = true
         ActivePage = name
-        
         for _, b in pairs(TabBar:GetChildren()) do
             if b:IsA("TextButton") then
                 b.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -665,17 +489,15 @@ end
 
 CreateTab("Movement", 1)
 CreateTab("ESP & Visuals", 2)
-CreateTab("Auto Farm", 3)
+CreateTab("Combat", 3)
 CreateTab("Give Item", 4)
 
 -- ==========================================
--- 8. POPULATE TABS (MOVEMENT & ESP)
+-- 7. POPULATE TABS (MOVEMENT, ESP, COMBAT)
 -- ==========================================
-local movePage = Pages["Movement"]
-
 local function CreateToggle(parent, text, stateKey, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -10, 0, 35)
+    btn.Size = UDim2.new(1, -10, 0, 30)
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.Text = " " .. text
     btn.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -703,49 +525,142 @@ local function CreateToggle(parent, text, stateKey, callback)
     end)
 end
 
-CreateSlider(movePage, "WalkSpeed", 0, 500, 16, function(val) States.Speed = val ApplyMovement() end)
-CreateSlider(movePage, "JumpPower", 0, 300, 50, function(val) States.Jump = val ApplyMovement() end)
-CreateToggle(movePage, "Noclip", "Noclip")
-CreateToggle(movePage, "Fly (WASD + Space/Ctrl)", "Fly", function(state) ToggleFly() end)
-CreateSlider(movePage, "Fly Speed", 0, 10, 5, function(val) States.FlySpeed = val end)
+local function CreateSlider(parent, text, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -10, 0, 40)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 15)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. default
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 11
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1, 0, 0, 4)
+    bar.Position = UDim2.new(0, 0, 0, 25)
+    bar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    bar.BorderSizePixel = 0
+    bar.Parent = frame
+    
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    fill.BorderSizePixel = 0
+    fill.Parent = bar
+    
+    local dragging = false
+    local function update(input)
+        local pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        local val = math.floor(min + (max - min) * pos)
+        label.Text = text .. ": " .. val
+        callback(val)
+    end
+    
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            update(input)
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
 
+-- Movement Tab
+local movePage = Pages["Movement"]
+local moveScroll = Instance.new("ScrollingFrame", movePage)
+moveScroll.Size = UDim2.new(1, 0, 1, 0)
+moveScroll.BackgroundTransparency = 1
+moveScroll.ScrollBarThickness = 2
+moveScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+moveScroll.CanvasSize = UDim2.new(0,0,0,0)
+local moveLayout = Instance.new("UIListLayout", moveScroll)
+moveLayout.Padding = UDim.new(0, 8)
+
+CreateSlider(moveScroll, "WalkSpeed", 0, 500, 16, function(val) States.Speed = val end)
+CreateSlider(moveScroll, "JumpPower", 0, 300, 50, function(val) States.Jump = val end)
+CreateToggle(moveScroll, "Noclip", "Noclip")
+CreateToggle(moveScroll, "Fly (WASD + Space/Ctrl)", "Fly", function(state) ToggleFly() end)
+CreateSlider(moveScroll, "Fly Speed", 0, 10, 5, function(val) States.FlySpeed = val end)
+CreateToggle(moveScroll, "SUPER FIX LAG", "FixLag", function(state) ToggleFixLag() end)
+
+-- ESP Tab
 local espPage = Pages["ESP & Visuals"]
-CreateToggle(espPage, "Enable ESP", "ESP")
-CreateToggle(espPage, "Show Health", "ESP_Health")
-CreateToggle(espPage, "Show Distance", "ESP_Distance")
-CreateToggle(espPage, "Show Name", "ESP_Name")
+local espScroll = Instance.new("ScrollingFrame", espPage)
+espScroll.Size = UDim2.new(1, 0, 1, 0)
+espScroll.BackgroundTransparency = 1
+espScroll.ScrollBarThickness = 2
+espScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+espScroll.CanvasSize = UDim2.new(0,0,0,0)
+local espLayout = Instance.new("UIListLayout", espScroll)
+espLayout.Padding = UDim.new(0, 8)
 
-local farmPage = Pages["Auto Farm"]
-CreateToggle(farmPage, "Auto Farm (Spam Skill + Aimbot)", "Farm")
+CreateToggle(espScroll, "Enable ESP", "ESP")
+CreateToggle(espScroll, "Show Health", "ESP_Health")
+CreateToggle(espScroll, "Show Distance", "ESP_Distance")
+CreateToggle(espScroll, "Show Name", "ESP_Name")
+
+-- Combat Tab
+local combatPage = Pages["Combat"]
+local combatScroll = Instance.new("ScrollingFrame", combatPage)
+combatScroll.Size = UDim2.new(1, 0, 1, 0)
+combatScroll.BackgroundTransparency = 1
+combatScroll.ScrollBarThickness = 2
+combatScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+combatScroll.CanvasSize = UDim2.new(0,0,0,0)
+local combatLayout = Instance.new("UIListLayout", combatScroll)
+combatLayout.Padding = UDim.new(0, 8)
+
+CreateToggle(combatScroll, "Auto Farm (Spam Skill)", "Farm")
+CreateToggle(combatScroll, "No Stun", "NoStun")
+CreateToggle(combatScroll, "No Hurt Cam", "NoHurtCam")
+
 -- ==========================================
--- 9. POPULATE TAB GIVE ITEM
+-- 8. GIVE ITEM TAB (FIXED LAYOUT)
 -- ==========================================
 local givePage = Pages["Give Item"]
 
+local container = Instance.new("Frame")
+container.Size = UDim2.new(1, 0, 1, 0)
+container.BackgroundTransparency = 1
+container.Parent = givePage
+
 local giveTabBar = Instance.new("ScrollingFrame")
-giveTabBar.Size = UDim2.new(0, 100, 1, -10)
-giveTabBar.Position = UDim2.new(0, 5, 0, 5)
+giveTabBar.Size = UDim2.new(0, 100, 1, 0)
 giveTabBar.BackgroundTransparency = 1
 giveTabBar.ScrollBarThickness = 1
 giveTabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
 giveTabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
-giveTabBar.Parent = givePage
-
+giveTabBar.Parent = container
 local giveLayout = Instance.new("UIListLayout", giveTabBar)
 giveLayout.SortOrder = Enum.SortOrder.LayoutOrder
 giveLayout.Padding = UDim.new(0, 3)
 
 local giveItemList = Instance.new("ScrollingFrame")
-giveItemList.Size = UDim2.new(1, -120, 1, -10)
-giveItemList.Position = UDim2.new(0, 110, 0, 5)
+giveItemList.Size = UDim2.new(1, -110, 1, 0)
+giveItemList.Position = UDim2.new(0, 110, 0, 0)
 giveItemList.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 giveItemList.BorderSizePixel = 0
 giveItemList.ScrollBarThickness = 2
 giveItemList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 giveItemList.CanvasSize = UDim2.new(0, 0, 0, 0)
-giveItemList.Parent = givePage
+giveItemList.Parent = container
 Instance.new("UICorner", giveItemList).CornerRadius = UDim.new(0, 5)
-
 local itemLayout = Instance.new("UIListLayout", giveItemList)
 itemLayout.SortOrder = Enum.SortOrder.LayoutOrder
 itemLayout.Padding = UDim.new(0, 3)
@@ -770,8 +685,11 @@ local function LoadCategory(catName, items)
         btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(25,25,25) end)
         
         btn.MouseButton1Click:Connect(function()
-            CreateRipple(btn, btn.AbsoluteSize.X/2, btn.AbsoluteSize.Y/2)
             equipItem(itemData.Name)
+            -- Đổi màu nút để biết đã bấm
+            btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+            task.wait(0.2)
+            btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
         end)
     end
 end
@@ -811,8 +729,5 @@ for i, catName in ipairs(sortedKeys) do
     end
 end
 
--- ==========================================
--- 10. KHỞI TẠO BAN ĐẦU
--- ==========================================
-ApplyMovement()
+-- Khởi tạo ban đầu
 print("DZ Hub Loaded Successfully!")
