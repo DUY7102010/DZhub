@@ -1,6 +1,5 @@
 --[[
-    DZ PROFESSIONAL HUB - PHẦN 1/3
-    Features: Core Logic, Movement, No Stun, Fix Lag
+    DZ PROFESSIONAL HUB - FULL (ĐÃ TÍCH HỢP AUTO AIM & AUTO HELP)
 ]]
 
 local Players = game:GetService("Players")
@@ -43,7 +42,8 @@ local ITEM_LIST = {
 local States = {
     ESP = false, ESP_Health = true, ESP_Distance = true, ESP_Name = true,
     Farm = false, Noclip = false, Fly = false, NoStun = false, NoHurtCam = false, FixLag = false,
-    Speed = 16, Jump = 50, FlySpeed = 5, SelectedItem = "Fire Ball"
+    Speed = 16, Jump = 50, FlySpeed = 5, SelectedItem = "Fire Ball",
+    AutoAim = false, AutoHelp = false, HelpThreshold = 0.3
 }
 
 local ESP_Objects = {}
@@ -52,7 +52,7 @@ local BV, BG = nil, nil
 local OriginalLighting = {Brightness = Lighting.Brightness, GlobalShadows = Lighting.GlobalShadows, EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale}
 
 -- ==========================================
--- 2. HÀM GIVE ITEM (GIỮ NGUYÊN)
+-- 2. HÀM GIVE ITEM
 -- ==========================================
 local function equipItem(realItemName)
     if game.PlaceId == 10253248401 then
@@ -72,12 +72,9 @@ end
 RunService.Heartbeat:Connect(function()
     if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
         local hum = LP.Character:FindFirstChildOfClass("Humanoid")
-        
-        -- Ép Speed và Jump chống bị reset
         if hum.WalkSpeed ~= States.Speed then hum.WalkSpeed = States.Speed end
         if hum.JumpPower ~= States.Jump then hum.JumpPower = States.Jump end
         
-        -- No Stun (Chống choáng/ngã)
         if States.NoStun then
             hum.PlatformStand = false
             if hum:GetState() == Enum.HumanoidStateType.Ragdoll or hum:GetState() == Enum.HumanoidStateType.FallingDown then
@@ -90,13 +87,11 @@ RunService.Heartbeat:Connect(function()
             end
         end
         
-        -- No Hurt Cam (Tắt rung màn hình khi bị đánh)
         if States.NoHurtCam then
             local playerModule = LP.PlayerScripts:FindFirstChild("PlayerModule")
             if playerModule then
                 local camModule = require(playerModule):GetCameras()
                 if camModule and camModule.activeCameraController then
-                    -- Ghi đè hàm rung (nếu có)
                     pcall(function() camModule.activeCameraController.Update = function() end end)
                 end
             end
@@ -104,18 +99,14 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Noclip
 RunService.Stepped:Connect(function()
     if States.Noclip and LP.Character then
         for _, v in pairs(LP.Character:GetDescendants()) do
-            if v:IsA("BasePart") and v.CanCollide then
-                v.CanCollide = false
-            end
+            if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
         end
     end
 end)
 
--- Fly Logic
 local function ToggleFly()
     if States.Fly then
         local char = LP.Character
@@ -155,25 +146,18 @@ local function ToggleFly()
     end
 end
 
--- Super Fix Lag (Dọn dẹp tận gốc)
 local function ToggleFixLag()
     if States.FixLag then
-        -- Hạ đồ họa
         Lighting.Brightness = 0
         Lighting.GlobalShadows = false
         Lighting.EnvironmentDiffuseScale = 0
         Lighting.EnvironmentSpecularScale = 0
-        
-        -- Quét và xóa rác
         for _, obj in pairs(Workspace:GetDescendants()) do
             if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") or obj:IsA("Explosion") then
                 obj.Enabled = false
             end
-            if obj:IsA("Decal") or obj:IsA("Texture") then
-                obj.Transparency = 1
-            end
+            if obj:IsA("Decal") or obj:IsA("Texture") then obj.Transparency = 1 end
         end
-        -- Tắt mấy cái bảng hiệu rác
         for _, obj in pairs(Workspace:GetDescendants()) do
             if obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
                 if not obj:FindFirstAncestorOfClass("Model") or (not obj.Parent:FindFirstChild("Humanoid")) then
@@ -182,17 +166,16 @@ local function ToggleFixLag()
             end
         end
     else
-        -- Khôi phục đồ họa (nếu tắt)
         Lighting.Brightness = OriginalLighting.Brightness
         Lighting.GlobalShadows = OriginalLighting.GlobalShadows
         Lighting.EnvironmentDiffuseScale = OriginalLighting.EnvironmentDiffuseScale
     end
 end
+
 -- ==========================================
--- 4. LOGIC ESP (ĐÃ FIX LỖI ĐÉO HIỆN)
+-- 4. LOGIC ESP
 -- ==========================================
 local function UpdateESP()
-    -- Dọn rác nếu thằng kia out game hoặc chết
     for plr, data in pairs(ESP_Objects) do
         if not plr.Parent or not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
             if data.Highlight then data.Highlight:Destroy() end
@@ -272,7 +255,7 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 -- ==========================================
--- 5. AUTO FARM (CHỌN SKILL -> CLICK NGƯỜI)
+-- 5. AUTO FARM
 -- ==========================================
 local function GetClosestPlayer()
     local closest = nil
@@ -282,7 +265,6 @@ local function GetClosestPlayer()
     
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            -- Bỏ qua nếu có vòng bảo vệ bất tử
             local hasFF = player.Character:FindFirstChildOfClass("ForceField") ~= nil
             if not hasFF then
                 local hrp = player.Character.HumanoidRootPart
@@ -305,11 +287,9 @@ task.spawn(function()
                 local myHRP = LP.Character.HumanoidRootPart
                 local targetHRP = target.Character.HumanoidRootPart
                 
-                -- Tele đến sát mặt
                 local dir = (targetHRP.Position - myHRP.Position).Unit
                 myHRP.CFrame = CFrame.new(targetHRP.Position - dir * 3, targetHRP.Position)
                 
-                -- Tìm skill mày đã chọn
                 local backpack = LP:FindFirstChild("Backpack")
                 local char = LP.Character
                 local toolToUse = nil
@@ -326,14 +306,9 @@ task.spawn(function()
                 end
                 
                 if toolToUse then
-                    -- Trang bị tool
-                    if toolToUse.Parent == backpack then
-                        toolToUse.Parent = char
-                    end
-                    -- Bấm xài skill
+                    if toolToUse.Parent == backpack then toolToUse.Parent = char end
                     pcall(function() toolToUse:Activate() end)
                     
-                    -- Giả lập click vào đầu địch
                     local cam = Workspace.CurrentCamera
                     local screenPos, onScreen = cam:WorldToViewportPoint(targetHRP.Position)
                     if onScreen then
@@ -349,6 +324,76 @@ task.spawn(function()
         end
     end
 end)
+
+-- ==========================================
+-- 5.5 LOGIC AUTO AIM & AUTO HELP (MỚI THÊM)
+-- ==========================================
+local lastTPTime = 0
+_G.CurrentTarget = nil
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if not States.AutoAim then _G.CurrentTarget = nil continue end
+        local closest, minDist = nil, math.huge
+        local myChar = LP.Character
+        local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        if not myHRP then continue end
+
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LP and plr.Character then
+                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                local hum = plr.Character:FindFirstChild("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    local dist3D = (hrp.Position - myHRP.Position).Magnitude
+                    local screenPos, onScreen = Workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
+                    if onScreen and dist3D < minDist then
+                        minDist = dist3D
+                        closest = hrp
+                    end
+                end
+            end
+        end
+        _G.CurrentTarget = closest
+    end
+end)
+
+local mt = getrawmetatable(game)
+local oldNamecall = mt.__namecall
+setreadonly(mt, false)
+
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    if method == "FireServer" and self.Name == "DoMagic" and States.AutoAim and _G.CurrentTarget then
+        local args = {...}
+        if typeof(args[3]) == "table" then
+            args[3].Mouse = _G.CurrentTarget.Position
+        end
+        return oldNamecall(self, unpack(args))
+    end
+    return oldNamecall(self, ...)
+end)
+setreadonly(mt, true)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if not States.AutoHelp then continue end
+        local char = LP.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        
+        if hum and hrp and hum.Health > 0 then
+            local hpPercent = hum.Health / hum.MaxHealth
+            if hpPercent <= States.HelpThreshold and os.clock() - lastTPTime > 3 then
+                local newPos = hrp.Position + Vector3.new(0, 200, 0)
+                hrp.CFrame = CFrame.new(newPos)
+                lastTPTime = os.clock()
+            end
+        end
+    end
+end)
+-- ==========================================
+-- HẾT KHÚC 1
+-- ==========================================
 -- ==========================================
 -- 6. UI BUILDER (BLACK & WHITE PRO)
 -- ==========================================
@@ -630,6 +675,15 @@ CreateToggle(combatScroll, "Auto Farm (Spam Skill)", "Farm")
 CreateToggle(combatScroll, "No Stun", "NoStun")
 CreateToggle(combatScroll, "No Hurt Cam", "NoHurtCam")
 
+-- TÍNH NĂNG MỚI THÊM VÀO TAB COMBAT
+CreateToggle(combatScroll, "Auto Aim (DoMagic)", "AutoAim")
+CreateToggle(combatScroll, "Auto Help (TP khi thấp máu)", "AutoHelp")
+CreateSlider(combatScroll, "Ngưỡng máu Auto Help (%)", 10, 90, 30, function(val) 
+    States.HelpThreshold = val / 100 
+end)
+-- ==========================================
+-- HẾT KHÚC 2
+-- ==========================================
 -- ==========================================
 -- 8. GIVE ITEM TAB (FIXED LAYOUT)
 -- ==========================================
@@ -686,7 +740,6 @@ local function LoadCategory(catName, items)
         
         btn.MouseButton1Click:Connect(function()
             equipItem(itemData.Name)
-            -- Đổi màu nút để biết đã bấm
             btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
             task.wait(0.2)
             btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -730,4 +783,4 @@ for i, catName in ipairs(sortedKeys) do
 end
 
 -- Khởi tạo ban đầu
-print("DZ Hub Loaded Successfully!")
+print("DZ Hub Loaded Successfully with Auto Aim & Auto Help!")
